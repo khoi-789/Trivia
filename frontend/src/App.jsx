@@ -327,7 +327,7 @@ function App() {
       return (
         <div className="main-column">
           <div className="neon-card">
-            <div style={{position: 'absolute', top: '-20px', left: '50%', transform: 'translateX(-50%)', background: 'var(--accent-magenta)', padding: '5px 20px', borderRadius: '20px', fontWeight: 'bold'}}>
+            <div className="round-badge">
               ROUND {currentQuestion.round} / {currentQuestion.totalRounds}
             </div>
             
