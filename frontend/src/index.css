@@ -324,3 +324,16 @@ body::after {
   z-index: -1;
   pointer-events: none;
 }
+
+/* Topic Badge */
+.topic-badge {
+  text-align: center; 
+  color: var(--accent-blue); 
+  opacity: 0.7; 
+  margin-bottom: 0.5rem; 
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase; 
+  letter-spacing: 2.5px;
+}
+

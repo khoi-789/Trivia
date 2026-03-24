@@ -36,12 +36,9 @@ function App() {
       setRoom(roomData);
       // Dynamic background
       if (roomData.bgUrl) {
-         document.body.style.backgroundImage = `url(${roomData.bgUrl})`;
+         document.body.style.background = `url(${roomData.bgUrl}) center/cover no-repeat fixed`;
          document.body.style.setProperty('--mist-opacity', roomData.bgOpacity || 0.5);
          document.body.style.setProperty('--mist-color', roomData.bgMistColor || '#f0f4f8');
-         document.body.style.backgroundSize = 'cover';
-         document.body.style.backgroundPosition = 'center';
-         document.body.style.backgroundAttachment = 'fixed';
       } else {
         document.body.style.background = 'linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%)';
         document.body.style.setProperty('--mist-opacity', 0);
@@ -351,7 +348,7 @@ function App() {
       return (
         <div className="main-column">
           <div className="neon-card">
-            <h4 style={{textAlign:'center', color:'var(--accent-blue)', opacity:0.6, marginBottom:'10px', textTransform:'uppercase', letterSpacing:'2px'}}>{room.roomName}</h4>
+            <h4 className="topic-badge">{room.roomName}</h4>
             <div className="round-badge">
               ROUND {currentQuestion.round} / {currentQuestion.totalRounds}
             </div>
