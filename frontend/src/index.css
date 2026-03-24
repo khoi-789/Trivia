@@ -66,6 +66,44 @@ body {
   margin-bottom: 2rem;
 }
 
+/* Form Inputs */
+.input-glow {
+  width: 100%;
+  padding: 1.2rem 1.8rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 22px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  outline: none;
+  transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.input-glow:focus {
+  background: white;
+  border-color: var(--accent-blue);
+  box-shadow: 0 10px 25px rgba(0, 129, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.host-input-flat {
+  background: white; 
+  border: 1px solid rgba(0,0,0,0.1); 
+  padding: 10px 15px; 
+  border-radius: 12px; 
+  font-size: 0.95rem;
+  font-weight: 500;
+  outline: none;
+  transition: 0.2s;
+}
+
+.host-input-flat:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(0, 129, 255, 0.1);
+}
+
+
 /* All action buttons style */
 .btn-glossy, .btn-tiny-glossy, .close-modal {
   background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
@@ -132,6 +170,38 @@ body {
 }
 
 .avatar-option.selected { background: white; border-color: var(--accent-blue); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+
+/* Host Controls Style */
+.lobby-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;
+}
+
+.host-controls-card {
+  background: rgba(255,255,255,0.4);
+  padding: 2.2rem; 
+  border-radius: 28px; 
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: inset 0 2px 5px rgba(255,255,255,0.5);
+}
+
+.host-controls-card h3 {
+  font-size: 0.85rem; 
+  letter-spacing: 1.5px; 
+  color: var(--accent-blue); 
+  text-transform: uppercase; 
+  margin-bottom: 1.5rem;
+  font-weight: 900;
+}
+
+.setting-row {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 18px; 
+  font-weight: 700; 
+  font-size: 0.95rem;
+  color: var(--text-dim);
+}
 
 /* Game Logic View */
 .question-text {
