@@ -14,6 +14,7 @@ function App() {
   const [correctAnswer, setCorrectAnswer] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState('🐱');
+  const [hostPassword, setHostPassword] = useState('');
 
   const avatars = ['🐱', '🦄', '🐶', '🐼', '🦁', '🐻', '🐰', '🐵', '🐧', '🐉', '🐴', '🐷', '🦆', '🐂', '🐐', '🐓'];
 
@@ -60,7 +61,7 @@ function App() {
   const joinRoom = (e) => {
     e.preventDefault();
     if (username && roomId) {
-      socket.emit('join_room', { roomId, username, avatar: selectedAvatar });
+      socket.emit('join_room', { roomId, username, avatar: selectedAvatar, hostPassword });
     }
   };
 
@@ -136,6 +137,13 @@ function App() {
           value={roomId} 
           onChange={(e) => setRoomId(e.target.value)} 
           required 
+        />
+        <input 
+          type="password" 
+          placeholder="Host Password (Leave blank to just join)" 
+          className="input-glow" 
+          value={hostPassword} 
+          onChange={(e) => setHostPassword(e.target.value)} 
         />
         
         <p style={{textAlign:'center', opacity:0.8, fontSize:'0.9rem'}}>Pick your Avatar:</p>

@@ -49,8 +49,12 @@ const rooms = {};
 io.on('connection', (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
-  socket.on('join_room', ({ roomId, username, avatar }) => {
+  socket.on('join_room', ({ roomId, username, avatar, hostPassword }) => {
     if (!rooms[roomId]) {
+      if (hostPassword !== '76422kh@i') {
+        socket.emit('join_error', 'Invalid Host Password. You cannot create a new room.');
+        return;
+      }
       rooms[roomId] = {
         id: roomId,
         hostId: socket.id,
