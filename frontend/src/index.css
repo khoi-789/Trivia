@@ -22,24 +22,41 @@ body {
   background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
   min-height: 100vh;
   color: var(--text-main);
-  display: flex;
-  justify-content: center;
-  align-items: center;
   overflow-x: hidden;
-  background-attachment: fixed;
-  background-size: cover;
-  transition: background 0.5s ease;
+  margin: 0;
 }
 
 .game-container {
   width: 100%;
   max-width: 1240px;
-  min-height: 90vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: row;
+  justify-content: center;
+  align-items: center;
   gap: 24px;
   padding: 2rem;
   z-index: 10;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* New Dynamic Background System */
+.app-bg-wrapper {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: all 0.5s ease;
+}
+
+.app-bg-mist {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1;
+  transition: all 0.5s ease;
 }
 
 /* Base Glass Card */
@@ -314,17 +331,6 @@ body {
   .avatar-grid { grid-template-columns: repeat(4, 1fr); padding: 0.5rem; }
 }
 
-/* Fog Effect Mask */
-body::after {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: var(--mist-color, #f0f4f8);
-  opacity: var(--mist-opacity, 0.5);
-  z-index: -1;
-  pointer-events: none;
-}
-
 /* Topic Badge */
 .topic-badge {
   text-align: center; 
@@ -336,4 +342,3 @@ body::after {
   text-transform: uppercase; 
   letter-spacing: 2.5px;
 }
-

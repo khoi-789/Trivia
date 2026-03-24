@@ -34,15 +34,6 @@ function App() {
   useEffect(() => {
     socket.on('room_update', (roomData) => {
       setRoom(roomData);
-      // Dynamic background
-      if (roomData.bgUrl) {
-         document.body.style.background = `url(${roomData.bgUrl}) center/cover no-repeat fixed`;
-         document.body.style.setProperty('--mist-opacity', roomData.bgOpacity || 0.5);
-         document.body.style.setProperty('--mist-color', roomData.bgMistColor || '#f0f4f8');
-      } else {
-        document.body.style.background = 'linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%)';
-        document.body.style.setProperty('--mist-opacity', 0);
-      }
     });
 
     socket.on('game_started', () => {
@@ -412,7 +403,24 @@ function App() {
   };
 
   return (
-    <div className="game-container" style={room?.bgUrl ? {backgroundImage: `url(${room.bgUrl})`, backgroundSize:'cover', backgroundPosition:'center'} : {}}>
+    <div className="game-container">
+      {/* Dynamic Background Wrapper */}
+      <div 
+        className="app-bg-wrapper"
+        style={{
+          backgroundImage: room?.bgUrl ? `url(${room.bgUrl})` : 'none',
+          backgroundColor: room?.bgMistColor || '#f0f4f8'
+        }}
+      >
+        <div 
+          className="app-bg-mist" 
+          style={{ 
+            opacity: room?.bgUrl ? (room.bgOpacity || 0.5) : 0,
+            backgroundColor: room?.bgMistColor || '#f0f4f8'
+          }} 
+        />
+      </div>
+
       {!room ? (
         <div className="main-column">
            {renderLobby()}
