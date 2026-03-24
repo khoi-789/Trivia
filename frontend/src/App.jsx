@@ -17,8 +17,17 @@ function App() {
   const [hostPassword, setHostPassword] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(20);
   const [manualMode, setManualMode] = useState(false);
+  const [roomName, setRoomName] = useState('My Trivia Game');
+  const [bgUrl, setBgUrl] = useState('');
 
   const avatars = ['🐱', '🦄', '🐶', '🐼', '🦁', '🐻', '🐰', '🐵', '🐧', '🐉', '🐴', '🐷', '🦆', '🐂', '🐐', '🐓'];
+
+  useEffect(() => {
+    // Check URL for room ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const r = urlParams.get('room');
+    if (r) setRoomId(r);
+  }, []);
 
   useEffect(() => {
     socket.on('room_update', (roomData) => {
@@ -168,8 +177,10 @@ function App() {
   );
 
   const updateSettings = () => {
-     socket.emit('update_room_settings', { roomId, maxPlayers, manualMode });
+     socket.emit('update_room_settings', { roomId, maxPlayers, manualMode, roomName, bgUrl });
   };
+  
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '?room=' + roomId)}`;
 
   const renderLeaderboard = () => {
     if (!room) return null;
@@ -212,34 +223,65 @@ function App() {
       return (
         <div className="main-column">
           <div className="neon-card">
-            <h2 className="title-neon" style={{fontSize: '2.5rem'}}>Waiting in Lobby</h2>
-            <div style={{background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '15px', marginBottom: '30px', border: '1px dashed var(--accent-cyan)'}}>
-               <h3 style={{color: 'var(--accent-cyan)', marginBottom: '5px'}}>Room: {roomId}</h3>
-               <p style={{opacity: 0.7}}>Share this code with your friends!</p>
+            <h2 className="title-neon" style={{fontSize: '2.5rem'}}>{room.roomName || 'Waiting in Lobby'}</h2>
+            
+            <div className="lobby-info-grid">
+               <div className="share-box">
+                  <h3 style={{color: 'var(--accent-blue)', marginBottom: '5px'}}>Room: {roomId}</h3>
+                  <div className="qr-container">
+                     <img src={qrUrl} alt="Quick Join QR" className="qr-img" />
+                     <p style={{fontSize: '0.8rem', marginTop: '10px', opacity:0.6}}>Scan to join!</p>
+                  </div>
+                  <button 
+                     onClick={() => {
+                        navigator.clipboard.writeText(window.location.origin + '?room=' + roomId);
+                        alert("Link copied!");
+                     }}
+                     className="btn-tiny"
+                  >
+                     📋 Copy Link
+                  </button>
+               </div>
+
+               {room.hostId === socket.id && (
+                  <div className="host-controls-card">
+                     <h3>Host Controls</h3>
+                     <div className="setting-row">
+                        <span>Room Name:</span>
+                        <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} onBlur={updateSettings} className="host-input-flat" />
+                     </div>
+                     <div className="setting-row">
+                        <span>Max Players:</span>
+                        <input type="number" value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} onBlur={updateSettings} className="host-input-flat" style={{width: '60px'}} />
+                     </div>
+                     <div className="setting-row">
+                        <span>Background URL:</span>
+                        <input type="text" value={bgUrl} placeholder="Direct Image Link" onChange={(e) => setBgUrl(e.target.value)} onBlur={updateSettings} className="host-input-flat" />
+                     </div>
+                     <div className="setting-row toggle-row">
+                        <span>Manual Next Question:</span>
+                        <label className="switch">
+                           <input type="checkbox" checked={manualMode} onChange={(e) => { setManualMode(e.target.checked); socket.emit('update_room_settings', { roomId, manualMode: e.target.checked }); }} />
+                           <span className="slider round"></span>
+                        </label>
+                     </div>
+                  </div>
+               )}
             </div>
+
             {room.hostId === socket.id ? (
-              <div style={{display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', alignItems: 'center'}}>
-                <div className="host-settings-panel">
-                   <div className="setting-row">
-                      <span>Max Players:</span>
-                      <input type="number" value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} onBlur={updateSettings} style={{width:'60px'}} />
-                   </div>
-                   <div className="setting-row">
-                      <span>Manual Next Mode:</span>
-                      <input type="checkbox" checked={manualMode} onChange={(e) => { setManualMode(e.target.checked); socket.emit('update_room_settings', { roomId, maxPlayers, manualMode: e.target.checked }); }} />
-                   </div>
-                </div>
-                <button onClick={startGame} className="btn-glossy" style={{width: '100%'}}>START GAME</button>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', marginTop: '20px'}}>
+                <button onClick={startGame} className="btn-glossy" style={{width: '100%'}}>START THE MISSION</button>
                 <button 
                    onClick={() => setShowImportModal(true)} 
                    className="import-btn-outline" 
-                   style={{width: '100%', textTransform: 'uppercase'}}
+                   style={{width: '100%'}}
                 >
                    ⚙️ Import Questions
                 </button>
               </div>
             ) : (
-              <p style={{fontSize: '1.2rem', animation: 'pulse 1.5s infinite'}}>Waiting for host to start...</p>
+              <p style={{fontSize: '1.2rem', animation: 'pulse 1.5s infinite', marginTop: '20px'}}>Ready for the Mission...</p>
             )}
           </div>
         </div>
@@ -252,17 +294,30 @@ function App() {
         <div className="main-column">
           <div className="neon-card" style={{borderColor: 'var(--accent-gold)'}}>
             <h1 className="title-neon" style={{color: 'var(--accent-gold)', textShadow: '0 0 20px var(--accent-gold)'}}>🏆 LỄ TRAO GIẢI 🏆</h1>
-            <div style={{display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '30px', width: '100%'}}>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', width: '100%'}}>
                {winners.slice(0, 3).map((w, i) => (
-                 <div key={w.id} className={`player-row rank-${i+1}`} style={{padding: '20px', display: 'flex', flexDirection: 'row', alignItems: 'center', background: 'rgba(255,255,255,0.05)'}}>
-                    <span style={{fontSize: '2rem', fontWeight: 'bold', width: '40px'}}>#{i+1}</span>
-                    <span style={{fontSize: '3rem', marginLeft: '20px'}}>{w.avatar}</span>
-                    <span style={{flex: 1, fontSize: '1.8rem', textAlign: 'left', marginLeft: '20px'}}>{w.name}</span>
-                    <span style={{fontSize: '1.8rem', fontWeight: 'bold'}}>{w.score} pts</span>
+                 <div key={w.id} className={`player-row winner-rank-${i+1}`}>
+                    <div style={{display:'flex', alignItems:'center', gap: '15px'}}>
+                      <span style={{fontSize: '2rem', fontWeight: '900'}}>#{i+1}</span>
+                      <span style={{fontSize: '2.5rem'}}>{w.avatar}</span>
+                      <span style={{flex: 1, fontSize: '1.4rem', fontWeight:'bold'}}>{w.name}</span>
+                      <span style={{fontSize: '1.4rem', fontWeight: '900', color:'var(--accent-blue)'}}>{w.score} pts</span>
+                    </div>
                  </div>
                ))}
             </div>
-            <p style={{marginTop: '30px', opacity: 0.7}}>Quay lại sảnh chờ sau 10 giây...</p>
+            
+            {room.hostId === socket.id ? (
+               <button 
+                  onClick={() => socket.emit('back_to_lobby', roomId)} 
+                  className="btn-glossy" 
+                  style={{width:'100%', marginTop:'30px'}}
+               >
+                  DONE - BACK TO LOBBY
+               </button>
+            ) : (
+               <p style={{marginTop: '30px', opacity: 0.7}}>Game Finished! Waiting for host...</p>
+            )}
           </div>
         </div>
       );
@@ -335,7 +390,7 @@ function App() {
   };
 
   return (
-    <div className="game-container">
+    <div className="game-container" style={room?.bgUrl ? {backgroundImage: `url(${room.bgUrl})`, backgroundSize:'cover', backgroundPosition:'center'} : {}}>
       {!room ? (
         <div className="main-column">
            {renderLobby()}

@@ -62,9 +62,10 @@ io.on('connection', (socket) => {
         status: 'lobby',
         maxPlayers: parseInt(hostPassword.split(':')[1]) || 20, // Example shorthand or separate field
         manualMode: false,
-        currentQuestionIndex: -1,
         questions: questions.map(q => ({ ...q, points: 100 })), // default points
-        questionStartTime: 0
+        questionStartTime: 0,
+        roomName: 'Phòng TRIVIA MASTER',
+        bgUrl: ''
       };
     } else {
       if (Object.keys(rooms[roomId].players).length >= (rooms[roomId].maxPlayers || 20)) {
@@ -164,17 +165,6 @@ io.on('connection', (socket) => {
                const safeRoom = { ...room };
                delete safeRoom.timeout;
                io.to(roomId).emit('room_update', safeRoom);
-
-               // After 10 seconds, go back to lobby
-               setTimeout(() => {
-                 if (rooms[roomId]) {
-                   rooms[roomId].status = 'lobby';
-                   rooms[roomId].currentQuestionIndex = -1;
-                   const lobbyRoom = { ...rooms[roomId] };
-                   delete lobbyRoom.timeout;
-                   io.to(roomId).emit('room_update', lobbyRoom);
-                 }
-               }, 10000);
             } else {
                sendQuestion(roomId);
             }
@@ -210,11 +200,22 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('update_room_settings', ({ roomId, maxPlayers, manualMode }) => {
+  socket.on('update_room_settings', ({ roomId, maxPlayers, manualMode, roomName, bgUrl }) => {
     const room = rooms[roomId];
     if (room && room.hostId === socket.id) {
-      room.maxPlayers = parseInt(maxPlayers) || 20;
-      room.manualMode = !!manualMode;
+      if (maxPlayers !== undefined) room.maxPlayers = parseInt(maxPlayers);
+      if (manualMode !== undefined) room.manualMode = !!manualMode;
+      if (roomName !== undefined) room.roomName = roomName;
+      if (bgUrl !== undefined) room.bgUrl = bgUrl;
+      io.to(roomId).emit('room_update', room);
+    }
+  });
+
+  socket.on('back_to_lobby', (roomId) => {
+    const room = rooms[roomId];
+    if (room && room.hostId === socket.id) {
+      room.status = 'lobby';
+      room.currentQuestionIndex = -1;
       io.to(roomId).emit('room_update', room);
     }
   });
