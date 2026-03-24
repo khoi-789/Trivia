@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import './index.css';
 
-const socket = io('http://localhost:3001');
+const socketUrl = import.meta.env.PROD ? undefined : 'http://localhost:3001';
+const socket = io(socketUrl);
 
 function App() {
   const [username, setUsername] = useState('');
