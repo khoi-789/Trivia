@@ -65,7 +65,9 @@ io.on('connection', (socket) => {
         questions: questions.map(q => ({ ...q, points: 100 })), // default points
         questionStartTime: 0,
         roomName: 'Phòng TRIVIA MASTER',
-        bgUrl: ''
+        bgUrl: '',
+        bgOpacity: 0.5,
+        bgMistColor: '#f0f4f8'
       };
     } else {
       if (Object.keys(rooms[roomId].players).length >= (rooms[roomId].maxPlayers || 20)) {
@@ -200,13 +202,15 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('update_room_settings', ({ roomId, maxPlayers, manualMode, roomName, bgUrl }) => {
+  socket.on('update_room_settings', ({ roomId, maxPlayers, manualMode, roomName, bgUrl, bgOpacity }) => {
     const room = rooms[roomId];
     if (room && room.hostId === socket.id) {
       if (maxPlayers !== undefined) room.maxPlayers = parseInt(maxPlayers);
       if (manualMode !== undefined) room.manualMode = !!manualMode;
       if (roomName !== undefined) room.roomName = roomName;
       if (bgUrl !== undefined) room.bgUrl = bgUrl;
+      if (bgOpacity !== undefined) room.bgOpacity = parseFloat(bgOpacity);
+      if (bgMistColor !== undefined) room.bgMistColor = bgMistColor;
       io.to(roomId).emit('room_update', room);
     }
   });

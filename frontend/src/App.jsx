@@ -19,6 +19,8 @@ function App() {
   const [manualMode, setManualMode] = useState(false);
   const [roomName, setRoomName] = useState('My Trivia Game');
   const [bgUrl, setBgUrl] = useState('');
+  const [bgOpacity, setBgOpacity] = useState(0.5);
+  const [bgMistColor, setBgMistColor] = useState('#f0f4f8');
 
   const avatars = ['🐱', '🦄', '🐶', '🐼', '🦁', '🐻', '🐰', '🐵', '🐧', '🐉', '🐴', '🐷', '🦆', '🐂', '🐐', '🐓'];
 
@@ -34,11 +36,15 @@ function App() {
       setRoom(roomData);
       // Dynamic background
       if (roomData.bgUrl) {
-        document.body.style.backgroundImage = `url(${roomData.bgUrl})`;
-        document.body.style.backgroundSize = 'cover';
-        document.body.style.backgroundPosition = 'center';
+         document.body.style.backgroundImage = `url(${roomData.bgUrl})`;
+         document.body.style.setProperty('--mist-opacity', roomData.bgOpacity || 0.5);
+         document.body.style.setProperty('--mist-color', roomData.bgMistColor || '#f0f4f8');
+         document.body.style.backgroundSize = 'cover';
+         document.body.style.backgroundPosition = 'center';
+         document.body.style.backgroundAttachment = 'fixed';
       } else {
-        document.body.style.backgroundImage = '';
+        document.body.style.background = 'linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%)';
+        document.body.style.setProperty('--mist-opacity', 0);
       }
     });
 
@@ -185,7 +191,7 @@ function App() {
   );
 
   const updateSettings = () => {
-     socket.emit('update_room_settings', { roomId, maxPlayers, manualMode, roomName, bgUrl });
+     socket.emit('update_room_settings', { roomId, maxPlayers, manualMode, roomName, bgUrl, bgOpacity, bgMistColor });
   };
   
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '?room=' + roomId)}`;
@@ -245,7 +251,7 @@ function App() {
                         navigator.clipboard.writeText(window.location.origin + '?room=' + roomId);
                         alert("Link copied!");
                      }}
-                     className="btn-tiny"
+                     className="btn-tiny-glossy"
                   >
                      📋 Copy Link
                   </button>
@@ -266,7 +272,14 @@ function App() {
                         <span>Background URL:</span>
                         <div style={{display:'flex', gap:'5px', width:'60%'}}>
                           <input type="text" value={bgUrl} placeholder="Direct Image Link" onChange={(e) => setBgUrl(e.target.value)} className="host-input-flat" style={{width:'100%'}} />
-                          <button onClick={updateSettings} className="btn-tiny" style={{padding:'5px'}}>SET</button>
+                          <button onClick={updateSettings} className="btn-tiny-glossy" style={{padding:'5px 10px'}}>SET</button>
+                        </div>
+                     </div>
+                     <div className="setting-row">
+                        <span>Fog (Color/Opacity):</span>
+                        <div style={{display:'flex', gap:'5px', width:'60%'}}>
+                          <input type="color" value={bgMistColor} onChange={(e) => { setBgMistColor(e.target.value); updateSettings(); }} style={{border:'none', width:'30px', background:'none'}} />
+                          <input type="range" min="0" max="1" step="0.1" value={bgOpacity} onChange={(e) => { setBgOpacity(e.target.value); updateSettings(); }} style={{flex:1}} />
                         </div>
                      </div>
                      <div className="setting-row toggle-row">
@@ -285,8 +298,8 @@ function App() {
                 <button onClick={startGame} className="btn-glossy" style={{width: '100%'}}>START THE MISSION</button>
                 <button 
                    onClick={() => setShowImportModal(true)} 
-                   className="import-btn-outline" 
-                   style={{width: '100%'}}
+                   className="btn-tiny-glossy" 
+                   style={{width: '100%', padding:'15px'}}
                 >
                    ⚙️ Import Questions
                 </button>
@@ -423,12 +436,12 @@ function App() {
                       Download Template
                    </button>
                    <div className="file-input-wrapper">
-                      <p style={{marginBottom: '10px', fontSize: '0.9rem'}}>Select your filled template:</p>
+                      <p style={{marginBottom: '10px', fontSize: '0.9rem', fontWeight:'bold'}}>Select your filled template:</p>
                       <input 
                         type="file" 
                         accept=".csv" 
                         onChange={handleImportCSV} 
-                        style={{cursor: 'pointer'}} 
+                        className="custom-file-input"
                       />
                    </div>
                 </div>
