@@ -60,12 +60,16 @@ io.on('connection', (socket) => {
         hostId: socket.id,
         players: {},
         status: 'lobby',
+        maxPlayers: parseInt(hostPassword.split(':')[1]) || 20, // Example shorthand or separate field
+        manualMode: false,
         currentQuestionIndex: -1,
-        questions: [...questions], 
-        questionStartTime: 0,
-        scores: {} // Kept scores, as it was in original and not removed by diff
+        questions: questions.map(q => ({ ...q, points: 100 })), // default points
+        questionStartTime: 0
       };
     } else {
+      if (Object.keys(rooms[roomId].players).length >= (rooms[roomId].maxPlayers || 20)) {
+        return socket.emit('join_error', 'Phòng đã đầy người chơi rồi!');
+      }
       // Check for duplicate username
       const nameExists = Object.values(rooms[roomId].players).some(
         p => p.name.toLowerCase() === username.toLowerCase()
@@ -77,13 +81,17 @@ io.on('connection', (socket) => {
     }
 
     socket.join(roomId);
-    rooms[roomId].players[socket.id] = {
-      id: socket.id,
-      name: username,
-      avatar: avatar || '🐱',
-      score: 0,
-      categories: 0
-    };
+    
+    // Only add to players list if NOT the host (host doesn't play)
+    if (socket.id !== rooms[roomId].hostId) {
+      rooms[roomId].players[socket.id] = {
+        id: socket.id,
+        name: username,
+        avatar: avatar || '🐱',
+        score: 0,
+        categories: 0
+      };
+    }
 
     const getSafeRoom = (r) => {
       const { timeout, ...safeRoom } = r;
@@ -104,6 +112,8 @@ io.on('connection', (socket) => {
         room.players[pId].score = 0;
         room.players[pId].categories = 0;
       });
+      
+      const { maxPlayers, manualMode } = room; // Destructure if passed from front
       
       io.to(roomId).emit('game_started');
       
@@ -142,6 +152,9 @@ io.on('connection', (socket) => {
             correctAnswer: q.options[q.answerIndex]
         });
         
+        // If manual mode, do nothing. Wait for 'next_question' event.
+        if (room.manualMode) return;
+
         setTimeout(() => {
             room.currentQuestionIndex++;
             if(room.currentQuestionIndex >= room.questions.length) {
@@ -172,6 +185,40 @@ io.on('connection', (socket) => {
     }
   }
 
+  socket.on('next_question', (roomId) => {
+    const room = rooms[roomId];
+    if (room && room.hostId === socket.id && room.status === 'playing') {
+      room.currentQuestionIndex++;
+      if (room.currentQuestionIndex >= room.questions.length) {
+        room.status = 'game_over';
+        io.to(roomId).emit('game_over', room.players);
+        
+        const safeRoom = { ...room };
+        delete safeRoom.timeout;
+        io.to(roomId).emit('room_update', safeRoom);
+
+        setTimeout(() => {
+          if (rooms[roomId]) {
+            rooms[roomId].status = 'lobby';
+            rooms[roomId].currentQuestionIndex = -1;
+            io.to(roomId).emit('room_update', rooms[roomId]);
+          }
+        }, 10000);
+      } else {
+        sendQuestion(roomId);
+      }
+    }
+  });
+
+  socket.on('update_room_settings', ({ roomId, maxPlayers, manualMode }) => {
+    const room = rooms[roomId];
+    if (room && room.hostId === socket.id) {
+      room.maxPlayers = parseInt(maxPlayers) || 20;
+      room.manualMode = !!manualMode;
+      io.to(roomId).emit('room_update', room);
+    }
+  });
+
   socket.on('submit_answer', ({ roomId, answerIndex }) => {
     const room = rooms[roomId];
     if (!room || room.status !== 'playing') return;
@@ -183,11 +230,12 @@ io.on('connection', (socket) => {
         const timeElapsed = (Date.now() - room.questionStartTime) / 1000;
         const timeLimit = currentQ.timeLimit;
         
-        // Points = max_points * (0.3 + 0.7 * (remaining_time / total_time))
+        // Points = question_points * (0.3 + 0.7 * (remaining_time / total_time))
         const remainingRatio = Math.max(0, (timeLimit - timeElapsed) / timeLimit);
-        const points = Math.floor(100 * (0.3 + 0.7 * remainingRatio));
+        const basePoints = currentQ.points || 100;
+        const pts = Math.floor(basePoints * (0.3 + 0.7 * remainingRatio));
 
-        room.players[socket.id].score += points;
+        room.players[socket.id].score += pts;
         // update categories for pie chart mock
         room.players[socket.id].categories = Math.min(6, room.players[socket.id].categories + 1);
         

@@ -15,6 +15,8 @@ function App() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState('🐱');
   const [hostPassword, setHostPassword] = useState('');
+  const [maxPlayers, setMaxPlayers] = useState(20);
+  const [manualMode, setManualMode] = useState(false);
 
   const avatars = ['🐱', '🦄', '🐶', '🐼', '🦁', '🐻', '🐰', '🐵', '🐧', '🐉', '🐴', '🐷', '🦆', '🐂', '🐐', '🐓'];
 
@@ -79,7 +81,7 @@ function App() {
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = "Question,Option 1,Option 2,Option 3,Option 4,Answer (1-4),Time (seconds)\nWhat is 2+2?,3,4,5,6,2,10\nCapital of Japan?,Seoul,Beijing,Tokyo,Bangkok,3,15";
+    const csvContent = "Question,Option 1,Option 2,Option 3,Option 4,Answer (1-4),Time (seconds),Points\nWhat is 2+2?,3,4,5,6,2,10,100\nCapital of Japan?,Seoul,Beijing,Tokyo,Bangkok,3,15,200";
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -97,14 +99,15 @@ function App() {
       const text = event.target.result;
       const rows = text.split('\n').slice(1); // skip header
       const importedQuestions = rows.map((row, idx) => {
-        const [q, o1, o2, o3, o4, ans, time] = row.split(',').map(s => s?.trim());
+        const [q, o1, o2, o3, o4, ans, time, pts] = row.split(',').map(s => s?.trim());
         if (!q) return null;
         return {
-          id: idx + 100, // random offset
+          id: idx + 100,
           question: q,
           options: [o1, o2, o3, o4],
           answerIndex: parseInt(ans) - 1,
-          timeLimit: parseInt(time) || 10
+          timeLimit: parseInt(time) || 10,
+          points: parseInt(pts) || 100
         };
       }).filter(q => q !== null);
 
@@ -164,6 +167,10 @@ function App() {
     </div>
   );
 
+  const updateSettings = () => {
+     socket.emit('update_room_settings', { roomId, maxPlayers, manualMode });
+  };
+
   const renderLeaderboard = () => {
     if (!room) return null;
     const sortedPlayers = Object.values(room.players).sort((a, b) => b.score - a.score);
@@ -212,6 +219,16 @@ function App() {
             </div>
             {room.hostId === socket.id ? (
               <div style={{display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', alignItems: 'center'}}>
+                <div className="host-settings-panel">
+                   <div className="setting-row">
+                      <span>Max Players:</span>
+                      <input type="number" value={maxPlayers} onChange={(e) => setMaxPlayers(e.target.value)} onBlur={updateSettings} style={{width:'60px'}} />
+                   </div>
+                   <div className="setting-row">
+                      <span>Manual Next Mode:</span>
+                      <input type="checkbox" checked={manualMode} onChange={(e) => { setManualMode(e.target.checked); socket.emit('update_room_settings', { roomId, maxPlayers, manualMode: e.target.checked }); }} />
+                   </div>
+                </div>
                 <button onClick={startGame} className="btn-glossy" style={{width: '100%'}}>START GAME</button>
                 <button 
                    onClick={() => setShowImportModal(true)} 
@@ -295,8 +312,12 @@ function App() {
             )}
             
             {correctAnswer && (
-               <div style={{marginTop: '20px', fontSize: '1.5rem', color: 'var(--accent-gold)'}}>
-                  Waiting for next round...
+               <div style={{marginTop: '20px', width:'100%'}}>
+                  {room.hostId === socket.id && room.manualMode ? (
+                     <button onClick={() => socket.emit('next_question', roomId)} className="btn-glossy" style={{width:'100%'}}>NEXT QUESTION</button>
+                  ) : (
+                     <div style={{fontSize: '1.5rem', color: 'var(--accent-gold)'}}>Waiting for next round...</div>
+                  )}
                </div>
             )}
           </div>
