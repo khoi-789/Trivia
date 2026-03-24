@@ -32,6 +32,14 @@ function App() {
   useEffect(() => {
     socket.on('room_update', (roomData) => {
       setRoom(roomData);
+      // Dynamic background
+      if (roomData.bgUrl) {
+        document.body.style.backgroundImage = `url(${roomData.bgUrl})`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+      } else {
+        document.body.style.backgroundImage = '';
+      }
     });
 
     socket.on('game_started', () => {
@@ -256,7 +264,10 @@ function App() {
                      </div>
                      <div className="setting-row">
                         <span>Background URL:</span>
-                        <input type="text" value={bgUrl} placeholder="Direct Image Link" onChange={(e) => setBgUrl(e.target.value)} onBlur={updateSettings} className="host-input-flat" />
+                        <div style={{display:'flex', gap:'5px', width:'60%'}}>
+                          <input type="text" value={bgUrl} placeholder="Direct Image Link" onChange={(e) => setBgUrl(e.target.value)} className="host-input-flat" style={{width:'100%'}} />
+                          <button onClick={updateSettings} className="btn-tiny" style={{padding:'5px'}}>SET</button>
+                        </div>
                      </div>
                      <div className="setting-row toggle-row">
                         <span>Manual Next Question:</span>
@@ -327,6 +338,7 @@ function App() {
       return (
         <div className="main-column">
           <div className="neon-card">
+            <h4 style={{textAlign:'center', color:'var(--accent-blue)', opacity:0.6, marginBottom:'10px', textTransform:'uppercase', letterSpacing:'2px'}}>{room.roomName}</h4>
             <div className="round-badge">
               ROUND {currentQuestion.round} / {currentQuestion.totalRounds}
             </div>
